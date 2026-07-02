@@ -1,3 +1,6 @@
-2026/07/02-10:15:48.877 1efc Reusing MANIFEST D:\gm\laragon\www\absensi siswa\backend-node\.wwebjs_auth\session-bot-sekolah\Default\Local Storage\leveldb/MANIFEST-000001
-2026/07/02-10:15:48.885 1efc Recovering log #4
-2026/07/02-10:15:48.889 1efc Reusing old log D:\gm\laragon\www\absensi siswa\backend-node\.wwebjs_auth\session-bot-sekolah\Default\Local Storage\leveldb/000004.log 
+2026/07/02-10:40:31.934 3244 Reusing MANIFEST D:\gm\laragon\www\absensi siswa\backend-node\.wwebjs_auth\session-bot-sekolah\Default\Local Storage\leveldb/MANIFEST-000001
+2026/07/02-10:40:31.943 3244 Recovering log #4
+2026/07/02-10:40:31.946 3244 Reusing old log D:\gm\laragon\www\absensi siswa\backend-node\.wwebjs_auth\session-bot-sekolah\Default\Local Storage\leveldb/000004.log 
+2026/07/02-10:41:31.977 3244 Level-0 table #7: started
+2026/07/02-10:41:32.008 3244 Level-0 table #7: 21289 bytes OK
+2026/07/02-10:41:32.013 3244 Delete type=0 #4

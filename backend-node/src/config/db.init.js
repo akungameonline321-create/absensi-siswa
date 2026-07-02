@@ -74,6 +74,77 @@ async function initializeDatabase() {
     `);
     console.log("   ✔ Tabel 'students' siap");
 
+    // ============================================
+    // Tabel: attendance_logs (Absensi)
+    // ============================================
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS attendance_logs (
+        id                  INT AUTO_INCREMENT PRIMARY KEY,
+        student_id          INT NOT NULL,
+        nis                 VARCHAR(20) NOT NULL,
+        nama_siswa          VARCHAR(100) NOT NULL,
+        kelas_id            INT NOT NULL,
+        nama_kelas          VARCHAR(30) NOT NULL,
+        guru_id             INT NOT NULL,
+        nama_guru           VARCHAR(100) NOT NULL,
+        status              ENUM('hadir', 'terlambat', 'izin', 'sakit', 'alpa') DEFAULT 'hadir',
+        confidence          FLOAT NOT NULL COMMENT 'Tingkat keyakinan (0.0 - 1.0)',
+        liveness_passed     BOOLEAN DEFAULT FALSE,
+        snapshot_path       VARCHAR(255) DEFAULT NULL,
+        processing_time_ms  INT DEFAULT 0,
+        has_mask            BOOLEAN DEFAULT FALSE,
+        has_glasses         BOOLEAN DEFAULT FALSE,
+        scanned_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        tanggal             DATE NOT NULL,
+        created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+        FOREIGN KEY (kelas_id) REFERENCES classes(id) ON DELETE CASCADE,
+        INDEX idx_kelas_tanggal (kelas_id, tanggal),
+        INDEX idx_student_tanggal (student_id, tanggal)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    console.log("   ✔ Tabel 'attendance_logs' siap");
+
+    // ============================================
+    // Tabel: face_vectors (Vektor Wajah)
+    // ============================================
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS face_vectors (
+        id          INT AUTO_INCREMENT PRIMARY KEY,
+        student_id  INT NOT NULL UNIQUE,
+        nis         VARCHAR(20) NOT NULL UNIQUE,
+        nama        VARCHAR(100) NOT NULL,
+        encoding    JSON NOT NULL COMMENT 'Array 128 dimensi',
+        created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    console.log("   ✔ Tabel 'face_vectors' siap");
+
+    // ============================================
+    // Tabel: face_updates (Pengajuan Update Wajah)
+    // ============================================
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS face_updates (
+        id          INT AUTO_INCREMENT PRIMARY KEY,
+        student_id  INT NOT NULL,
+        nis         VARCHAR(20) NOT NULL,
+        nama_siswa  VARCHAR(100) NOT NULL,
+        kelas_id    INT NOT NULL,
+        nama_kelas  VARCHAR(30) NOT NULL,
+        photo_path  VARCHAR(255) NOT NULL,
+        status      ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+        approved_by INT DEFAULT NULL,
+        created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+        FOREIGN KEY (kelas_id) REFERENCES classes(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    console.log("   ✔ Tabel 'face_updates' siap");
+
     // Add foreign key to users table after students table exists
     try {
       await pool.query(`

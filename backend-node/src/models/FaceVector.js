@@ -1,56 +1,25 @@
 // ============================================
-// FaceVector.js — Mongoose Schema
-// Menyimpan vektor wajah 128 dimensi di MongoDB Atlas
+// FaceVector.js — Query Helper untuk tabel 'face_vectors'
 // ============================================
 
-const { mongoose } = require("../config/db.mongo");
+const { pool } = require("../config/db.mysql");
 
-/**
- * Schema untuk menyimpan encoding wajah siswa.
- * Setiap siswa memiliki satu dokumen berisi array 128 float
- * yang dihasilkan oleh library face_recognition (dlib).
- *
- * student_id dan nis mereferensikan data di MySQL.
- */
-const faceVectorSchema = new mongoose.Schema(
-  {
-    // Referensi ke tabel students di MySQL
-    student_id: {
-      type: Number,
-      required: true,
-      unique: true,
-      index: true,
+const FaceVector = {
+    async findByStudent(studentId) {
+        const [rows] = await pool.query(
+            `SELECT * FROM face_vectors WHERE student_id = ?`,
+            [studentId]
+        );
+        return rows[0] || null;
     },
 
-    // NIS untuk cross-reference cepat
-    nis: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-
-    // Nama siswa (denormalisasi untuk kemudahan logging)
-    nama: {
-      type: String,
-      required: true,
-    },
-
-    // Vektor wajah 128 dimensi dari face_recognition
-    encoding: {
-      type: [Number],
-      required: true,
-      validate: {
-        validator: (arr) => arr.length === 128,
-        message: "Encoding wajah harus berisi tepat 128 elemen",
-      },
-    },
-  },
-  {
-    timestamps: true,   // Otomatis tambah createdAt & updatedAt
-    collection: "face_vectors",
-  }
-);
-
-const FaceVector = mongoose.model("FaceVector", faceVectorSchema);
+    async deleteByStudent(studentId) {
+        const [result] = await pool.query(
+            `DELETE FROM face_vectors WHERE student_id = ?`,
+            [studentId]
+        );
+        return { affectedRows: result.affectedRows };
+    }
+};
 
 module.exports = FaceVector;

@@ -14,7 +14,8 @@ Alur kerja:
 import numpy as np
 import cv2
 import face_recognition
-from app.database.mongo_client import get_collection
+import json
+from app.database.mysql_client import get_pool
 
 
 def decode_image(image_bytes: bytes) -> np.ndarray:
@@ -136,17 +137,22 @@ async def match_face(encoding: np.ndarray, tolerance: float = 0.55):
             - distance: float (semakin kecil = semakin mirip)
             - confidence: float (0.0–1.0, semakin besar = semakin yakin)
     """
-    collection = get_collection("face_vectors")
-
-    # Ambil semua vektor wajah dari database
-    cursor = collection.find({}, {"student_id": 1, "nis": 1, "nama": 1, "encoding": 1})
+    pool = get_pool()
+    
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            # Ambil semua vektor wajah dari database
+            await cur.execute("SELECT student_id, nis, nama, encoding FROM face_vectors")
+            rows = await cur.fetchall()
 
     best_match = None
     best_distance = float("inf")
 
-    async for doc in cursor:
-        # Konversi list → numpy array untuk perhitungan jarak
-        stored_encoding = np.array(doc["encoding"])
+    for row in rows:
+        student_id, nis, nama, encoding_json = row
+        
+        # Konversi JSON string -> list -> numpy array
+        stored_encoding = np.array(json.loads(encoding_json))
 
         # Hitung Euclidean distance
         distance = np.linalg.norm(encoding - stored_encoding)
@@ -154,9 +160,9 @@ async def match_face(encoding: np.ndarray, tolerance: float = 0.55):
         if distance < tolerance and distance < best_distance:
             best_distance = distance
             best_match = {
-                "student_id": doc["student_id"],
-                "nis": doc["nis"],
-                "nama": doc["nama"],
+                "student_id": student_id,
+                "nis": nis,
+                "nama": nama,
                 "distance": round(float(distance), 4),
                 "confidence": round(1.0 - float(distance), 4),
             }
@@ -203,24 +209,23 @@ async def register_face(student_id: int, nis: str, nama: str, image_bytes: bytes
     # 3. Ambil encoding wajah
     encoding = faces[0]["encoding"].tolist()  # Konversi numpy → list untuk MongoDB
 
-    # 4. Simpan ke MongoDB (upsert — update jika sudah ada)
-    collection = get_collection("face_vectors")
-    result = await collection.update_one(
-        {"student_id": student_id},
-        {
-            "$set": {
-                "student_id": student_id,
-                "nis": nis,
-                "nama": nama,
-                "encoding": encoding,
-            },
-            "$currentDate": {"updatedAt": True},
-            "$setOnInsert": {"createdAt": {"$type": "date"}},
-        },
-        upsert=True,
-    )
-
-    is_new = result.upserted_id is not None
+    # 4. Simpan ke MySQL (insert on duplicate key update)
+    encoding_json = json.dumps(encoding)
+    pool = get_pool()
+    
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            sql = """
+                INSERT INTO face_vectors (student_id, nis, nama, encoding)
+                VALUES (%s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE 
+                nis = VALUES(nis), nama = VALUES(nama), encoding = VALUES(encoding), updated_at = CURRENT_TIMESTAMP
+            """
+            await cur.execute(sql, (student_id, nis, nama, encoding_json))
+            
+            # Periksa apakah insert atau update (affected_rows = 1 untuk insert, 2 untuk update)
+            affected = cur.rowcount
+            is_new = affected == 1
 
     return {
         "student_id": student_id,

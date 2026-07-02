@@ -13,7 +13,6 @@ const morgan = require("morgan");
 
 // --- Import konfigurasi database ---
 const { connectMySQL, pool } = require("./src/config/db.mysql");
-const { connectMongoDB } = require("./src/config/db.mongo");
 const { initializeDatabase } = require("./src/config/db.init");
 
 // --- Import Socket.io handler ---
@@ -101,9 +100,6 @@ async function startServer() {
 
     // 2. Inisialisasi tabel MySQL (auto-create jika belum ada)
     await initializeDatabase();
-
-    // 3. Koneksi ke MongoDB Atlas
-    await connectMongoDB();
 
     // 4. Inisialisasi WhatsApp Bot
     const { initializeWhatsApp } = require("./src/services/whatsapp.service");

@@ -360,7 +360,7 @@ router.post("/request-face-update", uploadImage.single("photo"), async (req, res
 // GET /api/students/face-updates
 router.get("/face-updates", roleCheck("admin"), async (req, res) => {
   try {
-    const updates = await FaceUpdate.find().sort({ createdAt: -1 });
+    const updates = await FaceUpdate.findPending();
     res.status(200).json({ success: true, data: updates });
   } catch (error) {
     res.status(500).json({ success: false, message: "Terjadi kesalahan server" });
@@ -375,9 +375,7 @@ router.post("/approve-face-update/:id", roleCheck("admin"), async (req, res) => 
     if (!updateReq) return res.status(404).json({ success: false, message: "Request tidak ditemukan" });
 
     if (status === "rejected") {
-      updateReq.status = "rejected";
-      updateReq.approved_by = req.user.id;
-      await updateReq.save();
+      await FaceUpdate.updateStatus(updateReq.id, "rejected", req.user.id);
       return res.status(200).json({ success: true, message: "Request ditolak" });
     }
 
@@ -399,9 +397,7 @@ router.post("/approve-face-update/:id", roleCheck("admin"), async (req, res) => 
       });
 
       if (mlRes.data.success) {
-        updateReq.status = "approved";
-        updateReq.approved_by = req.user.id;
-        await updateReq.save();
+        await FaceUpdate.updateStatus(updateReq.id, "approved", req.user.id);
         return res.status(200).json({ success: true, message: "Dataset wajah berhasil diperbarui di AI" });
       } else {
         return res.status(400).json({ success: false, message: "Gagal diproses AI: " + mlRes.data.message });

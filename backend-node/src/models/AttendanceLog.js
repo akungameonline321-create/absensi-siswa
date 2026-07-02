@@ -1,115 +1,97 @@
 // ============================================
-// AttendanceLog.js — Mongoose Schema
-// Log absensi real-time di MongoDB Atlas
+// AttendanceLog.js — Query Helper untuk tabel 'attendance_logs'
+// Mengelola log absensi real-time di MySQL
 // ============================================
 
-const { mongoose } = require("../config/db.mongo");
+const { pool } = require("../config/db.mysql");
 
-/**
- * Schema untuk mencatat setiap event absensi yang terdeteksi.
- * Disimpan di MongoDB karena:
- * 1. Volume data tinggi (real-time per frame)
- * 2. Struktur data fleksibel
- * 3. Performa write yang lebih baik untuk logging
- */
-const attendanceLogSchema = new mongoose.Schema(
-  {
-    // --- Data Siswa (dari MySQL) ---
-    student_id: {
-      type: Number,
-      required: true,
-      index: true,
-    },
-    nis: {
-      type: String,
-      required: true,
-    },
-    nama_siswa: {
-      type: String,
-      required: true,
+const AttendanceLog = {
+    async findTodayByClass(classId, date) {
+        const [rows] = await pool.query(
+            `SELECT * FROM attendance_logs 
+             WHERE kelas_id = ? AND tanggal = ? 
+             ORDER BY scanned_at DESC`,
+            [classId, date]
+        );
+        return rows.map(r => ({ ...r, _id: r.id })); // Alias id to _id for frontend compatibility
     },
 
-    // --- Data Kelas ---
-    kelas_id: {
-      type: Number,
-      required: true,
-      index: true,
-    },
-    nama_kelas: {
-      type: String,
-      required: true,
-    },
-
-    // --- Data Guru yang Memindai ---
-    guru_id: {
-      type: Number,
-      required: true,
-    },
-    nama_guru: {
-      type: String,
-      required: true,
+    async findHistoryByClass(classId, date) {
+        const [rows] = await pool.query(
+            `SELECT * FROM attendance_logs 
+             WHERE kelas_id = ? AND tanggal = ? 
+             ORDER BY scanned_at ASC`,
+            [classId, date]
+        );
+        return rows.map(r => ({ ...r, _id: r.id }));
     },
 
-    // --- Hasil Pemindaian ---
-    status: {
-      type: String,
-      enum: ["hadir", "terlambat", "izin", "sakit", "alpa"],
-      default: "hadir",
-    },
-    confidence: {
-      type: Number,
-      min: 0,
-      max: 1,
-      required: true,
-      comment: "Tingkat keyakinan pencocokan wajah (0.0 - 1.0)",
-    },
-    liveness_passed: {
-      type: Boolean,
-      default: false,
-      comment: "Apakah deteksi kedipan mata (EAR) berhasil",
+    async findByStudent(studentId, limit) {
+        const [rows] = await pool.query(
+            `SELECT * FROM attendance_logs 
+             WHERE student_id = ? 
+             ORDER BY scanned_at DESC 
+             LIMIT ?`,
+            [studentId, limit]
+        );
+        return rows.map(r => ({ ...r, _id: r.id }));
     },
 
-    // --- Ekstra Fitur (Metrics & Visual) ---
-    snapshot_path: {
-      type: String,
-      default: null,
-      comment: "Path atau URL lokal untuk foto bukti absensi",
-    },
-    processing_time_ms: {
-      type: Number,
-      default: 0,
-      comment: "Waktu yang dibutuhkan dari deteksi awal hingga berhasil",
-    },
-    attributes: {
-      has_mask: { type: Boolean, default: false },
-      has_glasses: { type: Boolean, default: false },
+    async findRecentByStudent(studentId, cutoffTime) {
+        const [rows] = await pool.query(
+            `SELECT * FROM attendance_logs 
+             WHERE student_id = ? AND scanned_at >= ? 
+             ORDER BY scanned_at DESC LIMIT 1`,
+            [studentId, cutoffTime]
+        );
+        return rows[0] || null;
     },
 
-    // --- Waktu ---
-    scanned_at: {
-      type: Date,
-      default: Date.now,
-      index: true,
+    async findTodayByStudent(studentId, date) {
+        const [rows] = await pool.query(
+            `SELECT * FROM attendance_logs 
+             WHERE student_id = ? AND tanggal = ? 
+             ORDER BY scanned_at DESC LIMIT 1`,
+            [studentId, date]
+        );
+        return rows[0] || null;
     },
-    // Tanggal saja (YYYY-MM-DD) untuk query harian yang efisien
-    tanggal: {
-      type: String,
-      required: true,
-      index: true,
+
+    async delete(id) {
+        const [rows] = await pool.query(`SELECT * FROM attendance_logs WHERE id = ?`, [id]);
+        if (rows.length === 0) return null;
+        
+        await pool.query(`DELETE FROM attendance_logs WHERE id = ?`, [id]);
+        return rows[0]; // Return the deleted item
     },
-  },
-  {
-    timestamps: true,
-    collection: "attendance_logs",
-  }
-);
 
-// Compound index untuk query: "siapa saja yang hadir di kelas X pada tanggal Y"
-attendanceLogSchema.index({ kelas_id: 1, tanggal: 1 });
+    async create(data) {
+        const {
+            student_id, nis, nama_siswa, kelas_id, nama_kelas, guru_id, nama_guru,
+            status, confidence, liveness_passed, snapshot_path, processing_time_ms,
+            attributes, scanned_at, tanggal
+        } = data;
+        
+        const has_mask = attributes ? (attributes.has_mask ? 1 : 0) : 0;
+        const has_glasses = attributes ? (attributes.has_glasses ? 1 : 0) : 0;
 
-// Compound index untuk cooldown check: "apakah siswa X sudah absen hari ini"
-attendanceLogSchema.index({ student_id: 1, tanggal: 1 });
-
-const AttendanceLog = mongoose.model("AttendanceLog", attendanceLogSchema);
+        const [result] = await pool.query(
+            `INSERT INTO attendance_logs 
+            (student_id, nis, nama_siswa, kelas_id, nama_kelas, guru_id, nama_guru, status, confidence, liveness_passed, snapshot_path, processing_time_ms, has_mask, has_glasses, scanned_at, tanggal) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                student_id, nis, nama_siswa, kelas_id, nama_kelas, guru_id, nama_guru, 
+                status || 'hadir', confidence, liveness_passed ? 1 : 0, snapshot_path || null, 
+                processing_time_ms || 0, has_mask, has_glasses, scanned_at || new Date(), tanggal
+            ]
+        );
+        
+        const [rows] = await pool.query(`SELECT * FROM attendance_logs WHERE id = ?`, [result.insertId]);
+        const newLog = rows[0];
+        newLog._id = newLog.id; // Map _id for frontend compatibility
+        newLog.attributes = { has_mask: newLog.has_mask === 1, has_glasses: newLog.has_glasses === 1 };
+        return newLog;
+    }
+};
 
 module.exports = AttendanceLog;

@@ -16,12 +16,7 @@ const AttendanceController = {
       const { classId } = req.params;
       const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
-      const logs = await AttendanceLog.find({
-        kelas_id: parseInt(classId),
-        tanggal: today,
-      })
-        .sort({ scanned_at: -1 })
-        .lean();
+      const logs = await AttendanceLog.findTodayByClass(parseInt(classId), today);
 
       res.status(200).json({
         success: true,
@@ -57,12 +52,7 @@ const AttendanceController = {
         });
       }
 
-      const logs = await AttendanceLog.find({
-        kelas_id: parseInt(classId),
-        tanggal,
-      })
-        .sort({ scanned_at: 1 })
-        .lean();
+      const logs = await AttendanceLog.findHistoryByClass(parseInt(classId), tanggal);
 
       res.status(200).json({
         success: true,
@@ -91,12 +81,7 @@ const AttendanceController = {
       const { studentId } = req.params;
       const { limit = 30 } = req.query;
 
-      const logs = await AttendanceLog.find({
-        student_id: parseInt(studentId),
-      })
-        .sort({ scanned_at: -1 })
-        .limit(parseInt(limit))
-        .lean();
+      const logs = await AttendanceLog.findByStudent(parseInt(studentId), parseInt(limit));
 
       res.status(200).json({
         success: true,
@@ -126,10 +111,7 @@ const AttendanceController = {
   async isInCooldown(studentId, cooldownMinutes = 60) {
     const cutoffTime = new Date(Date.now() - cooldownMinutes * 60 * 1000);
 
-    const recentLog = await AttendanceLog.findOne({
-      student_id: studentId,
-      scanned_at: { $gte: cutoffTime },
-    });
+    const recentLog = await AttendanceLog.findRecentByStudent(studentId, cutoffTime);
 
     return !!recentLog;
   },
@@ -141,7 +123,7 @@ const AttendanceController = {
   async deleteAttendance(req, res) {
     try {
       const { id } = req.params;
-      const deletedLog = await AttendanceLog.findByIdAndDelete(id);
+      const deletedLog = await AttendanceLog.delete(id);
 
       if (!deletedLog) {
         return res.status(404).json({
@@ -203,10 +185,7 @@ const AttendanceController = {
       const today = new Date().toISOString().split("T")[0];
 
       // Cek apakah sudah absen hari ini
-      const existingLog = await AttendanceLog.findOne({
-        student_id: parseInt(student_id),
-        tanggal: today,
-      });
+      const existingLog = await AttendanceLog.findTodayByStudent(parseInt(student_id), today);
 
       if (existingLog) {
         return res.status(400).json({

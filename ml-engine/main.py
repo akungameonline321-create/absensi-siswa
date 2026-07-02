@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # --- Import modul internal ---
-from app.database.mongo_client import connect_mongo, close_mongo
+from app.database.mysql_client import connect_mysql, close_mysql
 from app.api.routes import router as api_router
 
 
@@ -26,17 +26,17 @@ from app.api.routes import router as api_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
-    Startup: Koneksi ke MongoDB Atlas
-    Shutdown: Tutup koneksi MongoDB
+    Startup: Koneksi ke MySQL
+    Shutdown: Tutup koneksi MySQL
     """
     # --- STARTUP ---
-    await connect_mongo()
+    await connect_mysql()
     print("[SUCCESS] ML Engine siap menerima request")
 
     yield  # Aplikasi berjalan di sini
 
     # --- SHUTDOWN ---
-    await close_mongo()
+    await close_mysql()
     print("[INFO] ML Engine dimatikan")
 
 

@@ -14,7 +14,7 @@ from pydantic import BaseModel
 # --- Import core modules ---
 from app.core.face_detector import decode_image, detect_faces, match_face, register_face
 from app.core.liveness_ear import calculate_avg_ear
-from app.database.mongo_client import get_database
+from app.database.mysql_client import get_pool
 
 
 # ============================================
@@ -49,20 +49,22 @@ class RecognitionResponse(BaseModel):
 # ============================================
 @router.get("/health", response_model=HealthResponse)
 async def health_check():
-    """Mengecek status ML Engine dan koneksi MongoDB."""
+    """Mengecek status ML Engine dan koneksi MySQL."""
     try:
-        db = get_database()
-        await db.command("ping")
-        mongo_ok = True
+        pool = get_pool()
+        async with pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("SELECT 1")
+        mysql_ok = True
     except Exception:
-        mongo_ok = False
+        mysql_ok = False
 
     return HealthResponse(
-        status="ok" if mongo_ok else "degraded",
+        status="ok" if mysql_ok else "degraded",
         timestamp=datetime.now().isoformat(),
         services={
             "fastapi": True,
-            "mongodb": mongo_ok,
+            "mysql": mysql_ok,
             "face_recognition": True,
             "liveness_detection": True,
         },

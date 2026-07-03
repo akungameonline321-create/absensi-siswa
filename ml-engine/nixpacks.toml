@@ -1,2 +1,2 @@
 [phases.setup]
-aptPkgs = ["libx11-6", "libxext6", "libxrender1", "libsm6"]
+aptPkgs = ["...", "libx11-6", "libxext6", "libxrender1", "libsm6"]

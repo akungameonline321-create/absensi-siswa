@@ -51,12 +51,14 @@ const initializeWhatsApp = () => {
 
 const formatPhoneNumber = (number) => {
   if (!number) return null;
-  // Hapus spasi atau karakter selain angka
-  let cleaned = number.replace(/\D/g, '');
+  // Hapus spasi atau karakter selain angka (pastikan input adalah string)
+  let cleaned = String(number).replace(/\D/g, '');
   
-  // Ubah awalan 0 menjadi 62
+  // Ubah awalan 0 menjadi 62, atau tambahkan 62 jika awalan 8
   if (cleaned.startsWith('0')) {
     cleaned = '62' + cleaned.substring(1);
+  } else if (cleaned.startsWith('8')) {
+    cleaned = '62' + cleaned;
   }
   
   // Minimal harus nomor Indonesia yang valid (sekitar 10-13 digit tanpa 62)
@@ -69,24 +71,40 @@ const formatPhoneNumber = (number) => {
   return cleaned;
 };
 
+const fs = require('fs');
+const path = require('path');
+const logFile = path.join(__dirname, '../../wa_debug.log');
+
+const logToDebug = (msg) => {
+  try {
+    fs.appendFileSync(logFile, `[${new Date().toISOString()}] ${msg}\n`);
+    console.log(msg);
+  } catch(e) {}
+};
+
 const sendMessage = async (number, message) => {
+  logToDebug(`[WhatsApp] Mencoba mengirim pesan ke: ${number}`);
+  
   if (!isReady || !client) {
-    console.warn('[WhatsApp] Bot belum siap, pesan diabaikan.');
+    logToDebug('[WhatsApp] Bot belum siap, pesan diabaikan.');
     return false;
   }
   
   const formattedNumber = formatPhoneNumber(number);
+  logToDebug(`[WhatsApp] Nomor setelah diformat: ${formattedNumber}`);
+  
   if (!formattedNumber) {
-    console.warn(`[WhatsApp] Nomor tujuan tidak valid: ${number}`);
+    logToDebug(`[WhatsApp] Nomor tujuan tidak valid: ${number}`);
     return false;
   }
 
   try {
+    logToDebug(`[WhatsApp] Memanggil client.sendMessage...`);
     await client.sendMessage(formattedNumber, message);
-    console.log(`[WhatsApp] Pesan berhasil dikirim ke ${number}`);
+    logToDebug(`[WhatsApp] Pesan berhasil dikirim ke ${formattedNumber}`);
     return true;
   } catch (error) {
-    console.error(`[WhatsApp] Gagal mengirim pesan ke ${number}:`, error.message);
+    logToDebug(`[WhatsApp] Gagal mengirim pesan ke ${formattedNumber}: ${error.message}`);
     return false;
   }
 };

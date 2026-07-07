@@ -280,7 +280,10 @@ function registerSocketHandlers(io, socket) {
 
         // --- 8. Kirim Notifikasi WhatsApp ---
         try {
+          console.log(`[DEBUG WA] Mencari data siswa dengan ID: ${student_id} (tipe: ${typeof student_id})`);
           const studentData = await Student.findById(student_id);
+          console.log(`[DEBUG WA] Hasil pencarian siswa:`, studentData ? `Ditemukan (no_telp: ${studentData.no_telp_ortu})` : 'TIDAK DITEMUKAN');
+          
           if (studentData && studentData.no_telp_ortu) {
             const { sendMessage } = require("../services/whatsapp.service");
             const waktu = scanTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
@@ -289,8 +292,11 @@ function registerSocketHandlers(io, socket) {
             msg += `Status: *${finalStatus.toUpperCase()}*\n\n`;
             msg += `Terima kasih.`;
             
+            console.log(`[DEBUG WA] Akan mengirim pesan ke: ${studentData.no_telp_ortu}`);
             // Background process kirim pesan (tidak perlu await agar tidak memblokir stream)
             sendMessage(studentData.no_telp_ortu, msg).catch(e => console.error(e));
+          } else {
+            console.log(`[DEBUG WA] Pesan WA dibatalkan. studentData: ${!!studentData}, no_telp_ortu: ${studentData ? studentData.no_telp_ortu : 'N/A'}`);
           }
         } catch (waError) {
           console.error("❌ Gagal mengirim WA otomatis:", waError.message);

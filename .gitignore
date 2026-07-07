@@ -1,3 +1,6 @@
 .env
 vendor/
 node_modules/
+backend-node/.wwebjs_auth/
+backend-node/.wwebjs_cache/
+backend-node/uploads/

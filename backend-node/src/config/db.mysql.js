@@ -10,7 +10,7 @@ const mysql = require("mysql2/promise");
 // Pool mengelola beberapa koneksi sekaligus, lebih efisien
 // daripada membuat koneksi baru setiap kali query.
 // ============================================
-const pool = mysql.createPool({
+const poolConfig = {
   host: process.env.MYSQL_HOST || "localhost",
   port: parseInt(process.env.MYSQL_PORT, 10) || 3306,
   user: process.env.MYSQL_USER || "root",
@@ -22,7 +22,16 @@ const pool = mysql.createPool({
   connectionLimit: 10,        // Maksimum koneksi bersamaan
   queueLimit: 0,              // 0 = tidak ada batas antrian
   connectTimeout: 10000,      // Timeout koneksi 10 detik
-});
+};
+
+// Add SSL for Aiven or other cloud providers requiring SSL
+if (process.env.MYSQL_HOST && process.env.MYSQL_HOST.includes('aivencloud.com')) {
+  poolConfig.ssl = {
+    rejectUnauthorized: false
+  };
+}
+
+const pool = mysql.createPool(poolConfig);
 
 // ============================================
 // Fungsi untuk menguji koneksi saat startup

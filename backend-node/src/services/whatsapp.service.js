@@ -10,7 +10,14 @@ const initializeWhatsApp = () => {
     authStrategy: new LocalAuth({ clientId: 'bot-sekolah' }),
     puppeteer: {
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      args: [
+        '--no-sandbox', 
+        '--disable-setuid-sandbox', 
+        '--disable-dev-shm-usage', 
+        '--disable-gpu',
+        '--no-first-run',
+        '--no-zygote'
+      ]
     }
   });
 

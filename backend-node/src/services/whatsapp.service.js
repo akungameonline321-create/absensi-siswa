@@ -27,6 +27,9 @@ const initializeWhatsApp = () => {
     console.log('=============================================================\n');
     qrcode.generate(qr, { small: true });
     console.log('\n=============================================================');
+    console.log('ATAU BUKA LINK INI JIKA QR DI ATAS TERPOTONG/RUSAK:');
+    console.log('https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' + encodeURIComponent(qr));
+    console.log('=============================================================\n');
   });
 
   client.on('ready', () => {

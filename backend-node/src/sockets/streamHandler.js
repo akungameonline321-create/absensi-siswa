@@ -286,7 +286,7 @@ function registerSocketHandlers(io, socket) {
           
           if (studentData && studentData.no_telp_ortu) {
             const { sendMessage } = require("../services/whatsapp.service");
-            const waktu = scanTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            const waktu = scanTime.toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' });
             let msg = `*NOTIFIKASI ABSENSI SMA*\n\nHalo Bapak/Ibu,\nAnak Anda *${nama}* (NIS: ${nis}) telah melakukan absensi otomatis (Scan Wajah).\n\n`;
             msg += `Waktu: *${waktu} WIB*\n`;
             msg += `Status: *${finalStatus.toUpperCase()}*\n\n`;

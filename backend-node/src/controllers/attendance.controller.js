@@ -229,7 +229,7 @@ const AttendanceController = {
         const studentData = await Student.findById(parseInt(student_id));
         if (studentData && studentData.no_telp_ortu) {
           const { sendMessage } = require("../services/whatsapp.service");
-          const waktu = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+          const waktu = new Date().toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' });
           let msg = `*NOTIFIKASI ABSENSI SMA*\n\nHalo Bapak/Ibu,\nAnak Anda *${nama_siswa}* (NIS: ${nis}) telah dicatat absen secara manual oleh *${nama_guru}*.\n\n`;
           msg += `Waktu: *${waktu} WIB*\n`;
           msg += `Status: *${status.toUpperCase()}*\n\n`;

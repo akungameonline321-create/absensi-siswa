@@ -95,7 +95,6 @@ const sendMessage = async (number, message) => {
   }
   
   const formattedNumber = formatPhoneNumber(number);
-  logToDebug(`[WhatsApp] Nomor setelah diformat: ${formattedNumber}`);
   
   if (!formattedNumber) {
     logToDebug(`[WhatsApp] Nomor tujuan tidak valid: ${number}`);
@@ -103,9 +102,27 @@ const sendMessage = async (number, message) => {
   }
 
   try {
-    logToDebug(`[WhatsApp] Memanggil client.sendMessage...`);
-    await client.sendMessage(formattedNumber, message);
-    logToDebug(`[WhatsApp] Pesan berhasil dikirim ke ${formattedNumber}`);
+    logToDebug(`[WhatsApp] Nomor setelah diformat: ${formattedNumber}`);
+    
+    // Cek apakah nomor tersebut terdaftar di WhatsApp
+    logToDebug('[WhatsApp] Memeriksa apakah nomor terdaftar...');
+    const isRegistered = await client.isRegisteredUser(formattedNumber);
+    if (!isRegistered) {
+      logToDebug(`❌ [WhatsApp] Nomor tidak terdaftar di WhatsApp: ${formattedNumber}`);
+      return false;
+    }
+
+    logToDebug('[WhatsApp] Memanggil client.sendMessage...');
+    
+    // Gunakan Promise.race untuk menambahkan timeout (15 detik)
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Timeout saat mengirim pesan (15 detik)')), 15000)
+    );
+    
+    const sendPromise = client.sendMessage(formattedNumber, message);
+    const response = await Promise.race([sendPromise, timeoutPromise]);
+    
+    logToDebug(`[WhatsApp] Berhasil terkirim! (ID: ${response.id._serialized})`);
     return true;
   } catch (error) {
     logToDebug(`[WhatsApp] Gagal mengirim pesan ke ${formattedNumber}: ${error.message}`);

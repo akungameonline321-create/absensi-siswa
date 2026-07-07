@@ -12,13 +12,14 @@ export const connectSocket = (token) => {
     return socket
   }
 
-  socket = io('/', {
+  const socketUrl = import.meta.env.VITE_SOCKET_URL || '/'
+  socket = io(socketUrl, {
     autoConnect: false,
     auth: { token },
     transports: ['websocket', 'polling'],
     reconnection: true,
     reconnectionAttempts: 5,
-    reconnectionDelay: 2000,
+    reconnectionDelay: 1000,
     reconnectionDelayMax: 10000,
   })
 

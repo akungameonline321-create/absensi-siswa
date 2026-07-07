@@ -112,7 +112,7 @@ const AttendanceCard = ({
         <div className="flex-shrink-0">
           {snapshotPath ? (
             <img 
-              src={`http://localhost:5000${snapshotPath}`} 
+              src={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'}${snapshotPath}`} 
               alt={`Foto ${nama}`}
               className="w-12 h-12 rounded-xl object-cover shadow-lg shadow-purple-500/20 transition-transform duration-300 group-hover:scale-110 border border-white/10"
               onError={(e) => {
@@ -208,7 +208,7 @@ const AttendanceCard = ({
                 {/* Popup Snapshot */}
                 <div className="absolute bottom-full right-0 mb-2 w-32 p-1 bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl shadow-2xl opacity-0 invisible group-hover/snap:opacity-100 group-hover/snap:visible transition-all z-50 origin-bottom-right transform scale-95 group-hover/snap:scale-100">
                   <img 
-                    src={`http://localhost:5000${snapshotPath}`} 
+                    src={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'}${snapshotPath}`} 
                     alt="Snapshot Scan" 
                     className="w-full h-auto rounded-lg object-cover"
                   />

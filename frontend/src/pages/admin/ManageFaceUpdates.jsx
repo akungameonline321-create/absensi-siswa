@@ -96,7 +96,7 @@ export default function ManageFaceUpdates() {
                       })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <a href={`http://localhost:5000${update.photo_path}`} target="_blank" rel="noreferrer" className="text-indigo-400 hover:text-indigo-300 flex items-center gap-2">
+                      <a href={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'}${update.photo_path}`} target="_blank" rel="noreferrer" className="text-indigo-400 hover:text-indigo-300 flex items-center gap-2">
                         <EyeIcon /> Lihat Foto
                       </a>
                     </td>

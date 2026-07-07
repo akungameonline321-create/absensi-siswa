@@ -28,13 +28,21 @@ async def connect_mysql():
     password = os.getenv("MYSQL_PASSWORD", "")
     db = os.getenv("MYSQL_DATABASE", "absensi_db")
 
+    import ssl
+    ssl_context = None
+    if "aivencloud.com" in host:
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+
     _pool = await aiomysql.create_pool(
         host=host,
         port=port,
         user=user,
         password=password,
         db=db,
-        autocommit=True
+        autocommit=True,
+        ssl=ssl_context
     )
     print(f"[SUCCESS] MySQL: Terhubung ke database \"{db}\"")
 

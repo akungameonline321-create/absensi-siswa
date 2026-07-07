@@ -77,7 +77,8 @@ app.include_router(api_router)
 # ============================================
 if __name__ == "__main__":
     host = os.getenv("ML_HOST", "0.0.0.0")
-    port = int(os.getenv("ML_PORT", 8000))
+    # Gunakan PORT dari Railway, jika tidak ada fallback ke ML_PORT atau 8000
+    port = int(os.getenv("PORT", os.getenv("ML_PORT", 8000)))
 
     uvicorn.run(
         "main:app",

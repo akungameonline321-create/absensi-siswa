@@ -109,14 +109,6 @@ const sendMessage = async (number, message) => {
   try {
     logToDebug(`[WhatsApp] Nomor setelah diformat: ${formattedNumber}`);
     
-    // Cek apakah nomor tersebut terdaftar di WhatsApp
-    logToDebug('[WhatsApp] Memeriksa apakah nomor terdaftar...');
-    const isRegistered = await client.isRegisteredUser(formattedNumber);
-    if (!isRegistered) {
-      logToDebug(`❌ [WhatsApp] Nomor tidak terdaftar di WhatsApp: ${formattedNumber}`);
-      return false;
-    }
-
     logToDebug('[WhatsApp] Memanggil client.sendMessage...');
     
     // Gunakan Promise.race untuk menambahkan timeout (15 detik)

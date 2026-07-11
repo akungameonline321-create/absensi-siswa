@@ -6,8 +6,13 @@ let isReady = false;
 
 const initializeWhatsApp = () => {
   console.log('[WhatsApp] Menginisialisasi client...');
+  const waSessionPath = process.env.WA_SESSION_PATH || undefined;
+  
   client = new Client({
-    authStrategy: new LocalAuth({ clientId: 'bot-sekolah' }),
+    authStrategy: new LocalAuth({ 
+      clientId: 'bot-sekolah',
+      ...(waSessionPath && { dataPath: waSessionPath })
+    }),
     puppeteer: {
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
       args: [

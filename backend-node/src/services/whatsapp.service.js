@@ -114,7 +114,12 @@ const sendMessage = async (number, message) => {
     // Debugging: Ambil screenshot dari headless browser untuk melihat apakah ada error/popup di layar WA Web
     try {
       if (client.pupPage) {
-        const screenshotPath = path.join(__dirname, '../../uploads/wa-debug.png');
+        const fs = require('fs');
+        const uploadDir = path.join(__dirname, '../../uploads');
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        const screenshotPath = path.join(uploadDir, 'wa-debug.png');
         await client.pupPage.screenshot({ path: screenshotPath });
         logToDebug(`[WhatsApp] Screenshot WA Web disimpan ke: /uploads/wa-debug.png`);
       }

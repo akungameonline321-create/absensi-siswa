@@ -22,7 +22,11 @@ const initializeWhatsApp = () => {
         '--disable-dev-shm-usage', 
         '--disable-gpu',
         '--no-first-run',
-        '--no-zygote'
+        '--no-zygote',
+        '--single-process',
+        '--disable-accelerated-2d-canvas',
+        '--disable-software-rasterizer',
+        '--mute-audio'
       ]
     },
     webVersionCache: {

@@ -1,5 +1,6 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
+const path = require('path');
 
 let client;
 let isReady = false;
@@ -109,6 +110,17 @@ const sendMessage = async (number, message) => {
     logToDebug(`[WhatsApp] Nomor setelah diformat: ${formattedNumber}`);
     
     logToDebug('[WhatsApp] Memanggil client.sendMessage...');
+    
+    // Debugging: Ambil screenshot dari headless browser untuk melihat apakah ada error/popup di layar WA Web
+    try {
+      if (client.pupPage) {
+        const screenshotPath = path.join(__dirname, '../../uploads/wa-debug.png');
+        await client.pupPage.screenshot({ path: screenshotPath });
+        logToDebug(`[WhatsApp] Screenshot WA Web disimpan ke: /uploads/wa-debug.png`);
+      }
+    } catch (e) {
+      logToDebug(`[WhatsApp] Gagal mengambil screenshot: ${e.message}`);
+    }
     
     // Gunakan Promise.race untuk menambahkan timeout (15 detik)
     const timeoutPromise = new Promise((_, reject) => 

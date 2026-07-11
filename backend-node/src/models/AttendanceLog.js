@@ -6,6 +6,30 @@
 const { pool } = require("../config/db.mysql");
 
 const AttendanceLog = {
+    async find(query = {}) {
+        let sql = `SELECT * FROM attendance_logs`;
+        const params = [];
+        const conditions = [];
+
+        if (query.tanggal) {
+            conditions.push(`tanggal = ?`);
+            params.push(query.tanggal);
+        }
+        if (query.kelas_id) {
+            conditions.push(`kelas_id = ?`);
+            params.push(query.kelas_id);
+        }
+
+        if (conditions.length > 0) {
+            sql += ` WHERE ` + conditions.join(` AND `);
+        }
+        
+        sql += ` ORDER BY scanned_at DESC`;
+
+        const [rows] = await pool.query(sql, params);
+        return rows.map(r => ({ ...r, _id: r.id }));
+    },
+
     async findTodayByClass(classId, date) {
         const [rows] = await pool.query(
             `SELECT * FROM attendance_logs 

@@ -30,7 +30,7 @@ router.get("/report", async (req, res) => {
     if (kelas_id) {
       query.kelas_id = parseInt(kelas_id);
     }
-    const logs = await AttendanceLog.find(query).lean();
+    const logs = await AttendanceLog.find(query);
 
     // Buat map student_id -> log
     const logMap = {};
@@ -93,7 +93,7 @@ router.get("/export", roleCheck("admin", "guru"), async (req, res) => {
     if (kelas_id) {
       query.kelas_id = parseInt(kelas_id);
     }
-    const logs = await AttendanceLog.find(query).lean();
+    const logs = await AttendanceLog.find(query);
     const logMap = {};
     logs.forEach((log) => {
       logMap[log.student_id] = log;
@@ -172,7 +172,7 @@ router.get("/rekap-semester", roleCheck("admin", "guru"), async (req, res) => {
     const students = await Student.findAll(kelas_id);
 
     // 2. Ambil semua log absensi untuk kelas tersebut
-    const logs = await AttendanceLog.find({ kelas_id: parseInt(kelas_id) }).lean();
+    const logs = await AttendanceLog.find({ kelas_id: parseInt(kelas_id) });
 
     // 3. Hitung total hari efektif (jumlah tanggal unik di logs)
     const uniqueDates = new Set(logs.map(l => l.tanggal));
@@ -227,7 +227,7 @@ router.get("/export-semester", roleCheck("admin", "guru"), async (req, res) => {
     if (!kelas_id) return res.status(400).json({ success: false, message: "kelas_id dibutuhkan" });
 
     const students = await Student.findAll(kelas_id);
-    const logs = await AttendanceLog.find({ kelas_id: parseInt(kelas_id) }).lean();
+    const logs = await AttendanceLog.find({ kelas_id: parseInt(kelas_id) });
     const uniqueDates = new Set(logs.map(l => l.tanggal));
     const totalHari = uniqueDates.size;
 
